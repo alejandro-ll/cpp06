@@ -1,7 +1,7 @@
 #include <iostream>
 #include <cstdlib>
 #include <ctime>
-#include "Base.hpp"
+#include "Identify.hpp"
 
 class A : public Base {};
 class B : public Base {};
@@ -29,13 +29,4 @@ void identify(Base& p) {
     catch(...) {}
     try { (void)dynamic_cast<C&>(p); std::cout << "C\n"; return; }
     catch(...) {}
-}
-
-int main() {
-    srand(time(0));
-
-    Base* obj = generate();
-    identify(obj);         
-    identify(*obj);        
-    delete obj;
 }
