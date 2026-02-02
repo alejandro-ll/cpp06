@@ -95,26 +95,39 @@ void ScalarConverter::convert(std::string const &s) {
     }
 
     if (isIntLiteral(s)) {
-        long long ll = 0;
-        {
-            std::istringstream iss(s);
-            iss >> ll;
-        }
-        if (ll < std::numeric_limits<int>::min() || ll > std::numeric_limits<int>::max()) {
-            std::cout << "char: impossible\nint: overflow\nfloat: impossible\ndouble: impossible\n";
+        double checkLimit = 0;
+        std::istringstream iss(s);
+        iss >> checkLimit;
+
+        if (iss.fail()) {
+            std::cout << "char: impossible\nint: impossible\nfloat: impossible\ndouble: impossible\n";
             return;
         }
-        int i = static_cast<int>(ll);
-        char cOut;
-        if (!inCharDisplayRange(i) || !std::isprint(static_cast<unsigned char>(i))) {
-            std::cout << "char: Non displayable\n";
-        } else {
-            cOut = static_cast<char>(i);
-            std::cout << "char: '" << cOut << "'\n";
+
+        bool isIntOverflow = false;
+        if (checkLimit < std::numeric_limits<int>::min() || checkLimit > std::numeric_limits<int>::max()) {
+            isIntOverflow = true;
         }
-        std::cout << "int: " << i << "\n";
-        std::cout << "float: " << static_cast<float>(i) << "f\n";
-        std::cout << "double: " << static_cast<double>(i) << "\n";
+
+        int i = static_cast<int>(checkLimit);
+        if (isIntOverflow || !inCharDisplayRange(i) || !std::isprint(static_cast<unsigned char>(i))) {
+            if (isIntOverflow) 
+                std::cout << "char: impossible\n";
+            else 
+                std::cout << "char: Non displayable\n";
+        } else {
+            std::cout << "char: '" << static_cast<char>(i) << "'\n";
+        }
+
+        if (isIntOverflow) {
+            std::cout << "int: impossible\n";
+        } else {
+            std::cout << "int: " << i << "\n";
+        }
+
+        std::cout << "float: " << static_cast<float>(checkLimit) << "f\n";
+        std::cout << "double: " << checkLimit << "\n";
+        
         return;
     }
 
@@ -128,17 +141,30 @@ void ScalarConverter::convert(std::string const &s) {
             std::istringstream iss(s.substr(0, s.size()-1));
             iss >> f;
         }
-            if (std::isnan(f) || std::isinf(f)) {
-                std::cout << "char: impossible\nint: impossible\nfloat: " << (std::isnan(f)?"nanf":(f>0?"+inff":"-inff")) << "\n";
-                std::cout << "double: " << (std::isnan(f)?"nan":(f>0?"+inf":"-inf")) << "\n";
-                return;
-            }
-        int i = static_cast<int>(f);
-        if (!inCharDisplayRange(i) || !std::isprint(static_cast<unsigned char>(i)))
-            std::cout << "char: Non displayable\n";
-        else
-            std::cout << "char: '" << static_cast<char>(i) << "'\n";
-        std::cout << "int: " << i << "\n";
+
+        //Chequeo de Pseudo-literales (nan, inf)
+        if (std::isnan(f) || std::isinf(f)) {
+            std::cout << "char: impossible\nint: impossible\nfloat: " << (std::isnan(f)?"nanf":(f>0?"+inff":"-inff")) << "\n";
+            std::cout << "double: " << (std::isnan(f)?"nan":(f>0?"+inf":"-inf")) << "\n";
+            return;
+        }
+
+        //Verificamos si cabe en INT antes de castear
+        // Usamos double (que es más grande) para comparar con los límites de int
+        double dCheck = static_cast<double>(f);
+        
+        if (dCheck < static_cast<double>(std::numeric_limits<int>::min()) || dCheck > static_cast<double>(std::numeric_limits<int>::max())) {
+            std::cout << "char: impossible\nint: impossible\n"; 
+        } else {
+            // Solo si cabe, hacemos el cast
+            int i = static_cast<int>(f);
+            if (!inCharDisplayRange(i) || !std::isprint(static_cast<unsigned char>(i)))
+                std::cout << "char: Non displayable\n";
+            else
+                std::cout << "char: '" << static_cast<char>(i) << "'\n";
+            std::cout << "int: " << i << "\n";
+        }
+
         std::cout << "float: " << f << "f\n";
         std::cout << "double: " << static_cast<double>(f) << "\n";
         return;
